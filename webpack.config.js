@@ -1,8 +1,8 @@
 const path = require('path');
 
 module.exports = {
-  devtool: 'inline-source-map',
-  entry: './index.js',
+  devtool: 'source-map',
+  entry: path.join(__dirname, process.env.TICKET_NAME, 'index.js'),
   mode: 'development',
   output: {
     filename: 'main.js',

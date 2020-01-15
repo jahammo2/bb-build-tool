@@ -2,8 +2,10 @@
   "name": "webpack-config",
   "version": "1.0.0",
   "scripts": {
+    "build": "yarn compile && node scripts/buildSnippets",
     "compile": "webpack",
-    "lint": "eslint './index.js'"
+    "lint": "eslint './GEAT-69/**/*.js'",
+    "provision": "node scripts/provision"
   },
   "main": "index.js",
   "license": "MIT",
@@ -20,5 +22,9 @@
     "eslint-plugin-react": "^7.17.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "indent-string": "^4.0.0",
+    "strip-indent": "^3.0.0"
   }
 }

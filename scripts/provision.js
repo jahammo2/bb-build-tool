@@ -62,8 +62,8 @@ const ticketName = process.env.TICKET_NAME;
 
 const snippetName = `${ticketName}-${process.env.SNIPPET_NAME}`;
 
-const baseDevPath = path.join(__dirname, '../', ticketName);
-const baseProjectsPath = path.join(__dirname, '../../projects', snippetName);
+const baseDevPath = path.join(__dirname, '../../', ticketName);
+const baseProjectsPath = path.join(__dirname, '../../../projects', snippetName);
 
 const compiledSnippetFilePath = path.join(baseProjectsPath, 'snippet_compiled.html');
 const indexJsFilePath = path.join(baseDevPath, 'index.js');

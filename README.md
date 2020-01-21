@@ -5,9 +5,8 @@
 - git clone into dev directory of ab-test-snippets repo
 - `rm -rf dev/build-tool/.git`
 - run provision
+- find and replace ticket number in package.json
 
 ## Commands
 
-* `TICKET_NAME=GEAT-XXX yarn compile`
-* `TICKET_NAME=GEAT-XXX SNIPPET_NAME=pdp-all-devices-test-sticky-cta yarn build`
-* `TICKET_NAME=GEAT-XXX SNIPPET_NAME=pdp-all-devices-test-sticky-cta yarn provision` - for starting a new project. Will give you the base files and structure
+* `yarn build`

@@ -81,22 +81,46 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./GEAT-69/index.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./GEAT-216/index.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./GEAT-69/index.js":
-/*!**************************!*\
-  !*** ./GEAT-69/index.js ***!
-  \**************************/
+/***/ "./GEAT-216/index.js":
+/*!***************************!*\
+  !*** ./GEAT-216/index.js ***!
+  \***************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
 (function () {
   // GLOBAL VARIABLES AND CACHED ELEMENTS
+  var $contentWrapper;
+  var $iFrameBranchBanner;
+  var buyPanelAddToCart;
+  var buyPanelSizeList;
+  var buyPanelSizeListClone;
+  var geatButtonsContainer;
+  var geatContentContainer;
+  var geatSizeTitlePriceContainer;
+  var geatStickyContainer;
+  var geatTopNavWrapper;
+  var giftButton;
+  var newSizeTitlePriceContainerHeight;
+  var originalCheckoutButton;
+  var originalPaypalButton;
+  var pdpContainer;
+  var areSizesShowing = false;
+  var buttonPosition;
+  var currentlySelectedItemSize;
+  var isOnDesktop = false;
+  var isOnMobile = false;
+  var isOnTablet = false;
+  var isStickyContainerOpen = true;
   var jQuery;
-  var $navList; // TOP LEVEL TESTING FNS
+  var screenWidth; // //////////////////////
+  // TOP LEVEL TESTING FNS
+  // //////////////////////
 
   var runPoll = function runPoll(pollCondition, offer) {
     var maxAttempts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 50;
@@ -108,7 +132,7 @@
     if (!pollCondition()) {
       maxAttempts -= 1; // eslint-disable-line no-param-reassign
 
-      return setTimeout(runPoll, 100, pollCondition, offer, maxAttempts); // eslint-disable-line consistent-return, max-len
+      return setTimeout(runPoll, 1000, pollCondition, offer, maxAttempts); // eslint-disable-line consistent-return, max-len
     }
 
     offer();
@@ -118,158 +142,385 @@
     jQuery = window.jQuery;
 
     if (jQuery) {
-      $navList = jQuery('.nav-list.nav-list--categories');
-      return Boolean($navList.length);
+      $contentWrapper = jQuery('.content-wrapper');
+      pdpContainer = $contentWrapper.find('.pdp-container');
+      originalCheckoutButton = pdpContainer.find('.pdp-cta-btn');
+      originalPaypalButton = pdpContainer.find('.pdp-paypal-checkout-button');
+      buyPanelSizeList = $contentWrapper.find('#sizeChipList');
+      return Boolean(originalCheckoutButton.length) && Boolean(originalPaypalButton.length) && Boolean(buyPanelSizeList.length);
     }
 
     return false;
   }; // /////////////////////////
-  // TEST SPECIFIC JAVASCRIPT
+  // TEST-SPECIFIC JAVASCRIPT
   // /////////////////////////
+  // //////////////
+  // Used by all
+  // //////////////
 
 
-  var getMerchCategoryData = function getMerchCategoryData(categoryName) {
-    var siteUrl = window.UA.CONFIG.base_url + window.UA.REQUEST.runtime.locale_segment;
+  function handleCloseClick() {
+    areSizesShowing = false;
+    if (isOnMobile) closeSizeListOnMobile();
+    buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--closed');
+    return closeSizesTitlePrice();
+  }
 
-    switch (categoryName) {
-      case 'Men':
-        return {
-          dataDtmKey: 'Men|Spotlight-GEAT-236|UA Rush',
-          heading: 'UA RUSH™',
-          imageSrc: 'https://underarmour.scene7.com/is/image/Underarmour/FW19_TopNav_MensTee_Rush?fmt=jpg&wid=300',
-          shopUrl: siteUrl + '/mens/rush-infrared-technology-athletic-apparel/g/3943t'
-        };
+  function handleCTAButtonClick() {
+    if (!currentlySelectedItemSize) handleSizeValidations();
+  }
 
-      case 'Women':
-        return {
-          dataDtmKey: 'Women|Spotlight-GEAT-236|UA ColdGear',
-          heading: 'UA ColdGear®',
-          imageSrc: 'https://underarmour.scene7.com/is/image/Underarmour/FW19_TopNav_WomensCG_CGReinvent?fmt=jpg&wid=300',
-          shopUrl: siteUrl + '/womens/cold-gear/g/3c11q'
-        };
+  function handleCTAs() {
+    originalCheckoutButton.click(handleCTAButtonClick);
+    originalPaypalButton.click(handleCTAButtonClick);
+  }
 
-      case 'Boys':
-        return {
-          dataDtmKey: 'Boys|Spotlight-GEAT-236|UA Hoodies',
-          heading: 'UA Hoodies',
-          imageSrc: 'https://underarmour.scene7.com/is/image/Underarmour/FW19_TopNav_BoysArmourFleece?fmt=jpg&wid=300',
-          shopUrl: siteUrl + '/boys/hoodies/g/3f11'
-        };
+  function handleGiftCardPage() {
+    if (window.location.href.indexOf('under-armour-gift-card') < 0) return null;
+    return geatSizeTitlePriceContainer.children('.GEAT-216-size-error').text('Please select an amount');
+  }
 
-      case 'Girls':
-        return {
-          dataDtmKey: 'Girls|Spotlight-GEAT-236|UA Hoodies',
-          heading: 'UA Hoodies',
-          imageSrc: 'https://underarmour.scene7.com/is/image/Underarmour/FW19_TopNav_GirlsHoodie_SS20Youth?fmt=jpg&wid=300',
-          shopUrl: siteUrl + '/girls/hoodies/g/3i11'
-        };
-
-      case 'Shoes':
-        return {
-          dataDtmKey: 'Shoes|Spotlight-GEAT-236|UA TriBase Reign 2',
-          heading: 'UA TriBase™ Reign 2',
-          imageSrc: 'https://underarmour.scene7.com/is/image/Underarmour/FW19_TopNav_Tribase?fmt=jpg&wid=300',
-          shopUrl: siteUrl + '/training/g/3i4'
-        };
-
-      default:
-        return console.error("the category ".concat(categoryName, " was not found"));
-      // eslint-disable-line no-console
+  function handleSizeValidations() {
+    if (areSizesShowing) {
+      geatSizeTitlePriceContainer.css('height', newSizeTitlePriceContainerHeight + 20);
+      buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--error-active');
+      return geatSizeTitlePriceContainer.children('.GEAT-216-size-error').addClass('GEAT-216-size-error--active');
     }
-  };
 
-  var getNewColumnHTML = function getNewColumnHTML(_ref) {
-    var dataDtmKey = _ref.dataDtmKey,
-        heading = _ref.heading,
-        imageSrc = _ref.imageSrc,
-        shopUrl = _ref.shopUrl;
-    return "\n      <div class=\"nav-column default GEAT-236-nav-column\">\n        <a\n          data-dtm-key=\"".concat(dataDtmKey, "\"\n          href=").concat(shopUrl, "\n        >\n          <img\n            alt=\"UA Product Image\"\n            class=\"GEAT-236-hero-image\"\n            src=").concat(imageSrc, "\n          />\n        </a>\n\n        <div class=\"GEAT-236-top-heading\">\n          ").concat(heading, "\n        </div>\n\n        <a\n          class=\"GEAT-236-shop-link\"\n          data-dtm-key=\"").concat(dataDtmKey, "\"\n          href=").concat(shopUrl, "\n        >\n          Shop Collection\n        </a>\n      </div>\n    ");
-  };
+    if (isOnMobile) {
+      openSizeListOnMobile();
+    } else {
+      openSizeListOnDesktop();
+    }
 
-  var getNewContainerHTML = function getNewContainerHTML(_ref2) {
-    var dataDtmKey = _ref2.dataDtmKey,
-        heading = _ref2.heading,
-        imageSrc = _ref2.imageSrc,
-        shopUrl = _ref2.shopUrl;
-    return "\n      <div class=\"nav-column spotlight GEAT-236-spotlight-container\">\n        <a\n          data-dtm-key=\"".concat(dataDtmKey, "\"\n          href=").concat(shopUrl, "\n        >\n          <img\n            alt=\"UA Product Image\"\n            class=\"GEAT-236-hero-image\"\n            src=").concat(imageSrc, "\n          />\n        </a>\n\n        <div class=\"GEAT-236-top-heading\">\n          ").concat(heading, "\n        </div>\n\n        <a\n          class=\"GEAT-236-shop-link\"\n          data-dtm-key=\"").concat(dataDtmKey, "\"\n          href=").concat(shopUrl, "\n        >\n          Shop Collection\n        </a>\n      </div>\n    ");
-  };
+    areSizesShowing = true;
+    openSizesTitlePrice();
+    geatTopNavWrapper.click(handleCloseClick);
+    return geatStickyContainer.find('.GEAT-216-close-link').click(handleCloseClick);
+  }
 
-  var handleCategory = function handleCategory(category, isOnTablet) {
-    var $menu = jQuery(category).children('.ua-top-nav-menu');
-    var categoryName = $menu.children('.ua-top-nav-item--mobile').data('dtm-key');
-    if (categoryName === 'Outlet') return;
-    if (categoryName === 'Gift Guide') return;
-    var container = $menu.children('.ua-top-nav-column-container');
-    var data = getMerchCategoryData(categoryName);
-    var html;
+  function closeSizesTitlePrice() {
+    return geatSizeTitlePriceContainer.addClass('GEAT-216-content-container__size-title-price--closed');
+  }
+
+  function openSizesTitlePrice() {
+    return geatSizeTitlePriceContainer.removeClass('GEAT-216-content-container__size-title-price--closed');
+  }
+
+  function prepareItemSize(size) {
+    var $item = jQuery(size);
+    if ($item.hasClass('selected')) currentlySelectedItemSize = $item;
+    return $item;
+  }
+
+  function sizeListSizesCallback(_, size) {
+    var callback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {};
+    var $item = prepareItemSize(size);
+    $item.click(function () {
+      currentlySelectedItemSize = $item;
+      callback($item);
+      var sizeError = geatSizeTitlePriceContainer.children('.GEAT-216-size-error');
+
+      if (sizeError) {
+        geatSizeTitlePriceContainer.css('height', newSizeTitlePriceContainerHeight);
+        sizeError.removeClass('GEAT-216-size-error--active');
+        buyPanelSizeList.removeClass('GEAT-216-buypanel-sizelist--error-active');
+      }
+    });
+  }
+
+  function setUpBuyPanelSizeList(callback) {
+    buyPanelSizeList.children().each(callback || sizeListSizesCallback);
+    buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist');
+  }
+
+  function setSizeTitlePriceContainerHeight() {
+    var extra = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+    var sizeListHeight = buyPanelSizeList.height(); // sizeListHeight + margins around size list + aeshetic spacing
+
+    newSizeTitlePriceContainerHeight = sizeListHeight + 30 + extra;
+    geatSizeTitlePriceContainer.css('height', newSizeTitlePriceContainerHeight);
+  } // //////////////
+  // Desktop only
+  // //////////////
+  // Events
+
+
+  function closeStickyContainerOnDesktop() {
+    // If it's not open, there's no need to do a DOM manipulation.
+    if (!isStickyContainerOpen) return;
+    isStickyContainerOpen = false;
+    buyPanelSizeList.removeClass('GEAT-216-buypanel-sizelist--sticky-open');
+    buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--closed');
+    geatStickyContainer.addClass('GEAT-216-sticky-container--closed');
+    handleCloseClick();
+    toggleCTALocationsOnDesktop();
+  }
+
+  function openStickyContainerOnDesktop() {
+    if (isStickyContainerOpen) return;
+    isStickyContainerOpen = true;
+    buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--sticky-open');
+    buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--closed');
+    geatStickyContainer.removeClass('GEAT-216-sticky-container--closed');
+    toggleCTALocationsOnDesktop();
+  }
+
+  function openSizeListOnDesktop() {
+    return buyPanelSizeList.removeClass('GEAT-216-buypanel-sizelist--closed');
+  }
+
+  function setUpTitlesAndPricesOnDesktop(productPrice, productTitle) {
+    geatSizeTitlePriceContainer = geatStickyContainer.children('.GEAT-216-content-container__size-title-price');
+    geatContentContainer.children('.GEAT-216-title-price-heading-container').prepend(productTitle).append(productPrice);
+  }
+
+  function handleScrollOnDesktop() {
+    var $scrollPosition = jQuery(window).scrollTop(); // To handle odd scroll behavior on tablets
 
     if (isOnTablet) {
-      html = getNewContainerHTML(data);
-      container.addClass('spotlight-container');
-    } else {
-      html = getNewColumnHTML(data);
+      $scrollPosition += 60;
+      var diff = $scrollPosition - buttonPosition;
+      if (diff >= 60) return openStickyContainerOnDesktop();
+      if (diff >= 0 && diff < 60) return null;
+      return closeStickyContainerOnDesktop();
     }
 
-    container.prepend(html);
-  }; // From John for hover tracking
+    if ($scrollPosition >= buttonPosition) return openStickyContainerOnDesktop();
+    return closeStickyContainerOnDesktop();
+  }
+
+  function toggleCTALocationsOnDesktop() {
+    if (pdpContainer.hasClass('GEAT-216-pdp-container--sticky-open')) {
+      pdpContainer.find('.GEAT-216-div-cta-placeholder').remove();
+      return pdpContainer.removeClass('GEAT-216-pdp-container--sticky-open');
+    }
+
+    var height = geatSizeTitlePriceContainer.height() + 50;
+    if (isOnTablet) height = 66; // To keep the sibling elements from jumping up "spaces" and
+    // creating a harsh transition
+
+    originalCheckoutButton.after("\n        <div\n          class=\"GEAT-216-div-cta-placeholder\"\n          style=\"height: ".concat(height, "px\"\n        />\n      ")).after('<div class="GEAT-216-div-cta-placeholder" />');
+    return pdpContainer.addClass('GEAT-216-pdp-container--sticky-open');
+  }
+
+  function addStickyContainerOnDesktop() {
+    buyPanelAddToCart = $contentWrapper.find('.buypanel_addtocart');
+    buyPanelAddToCart.append(stickyContainerHtmlOnDesktop);
+    geatStickyContainer = buyPanelAddToCart.children('.GEAT-216-sticky-container');
+    giftButton = buyPanelAddToCart.find('.pdp-smart-gift-button');
+    giftButton.addClass('GEAT-216-smart-gift-button');
+  }
+
+  function moveSizesOnDesktop() {
+    setUpBuyPanelSizeList(); // 18 extra pixels for aesthetics
+
+    setSizeTitlePriceContainerHeight(18);
+  } // //////////////
+  // Mobile only
+  // //////////////
 
 
-  var attachHoverMutationObserver = function attachHoverMutationObserver() {
-    var targetNode = document.querySelector('.nav-list.nav-list--categories');
-    var config = {
-      attributes: true,
-      childList: true,
-      subtree: true
+  function updateElementsInBuyPanelOnMobile() {
+    var addToCartQuantity = buyPanelAddToCart.find('.addtocart-quantity');
+    var uaTopNavWrapper = $contentWrapper.find('#ua-top-nav-wrapper');
+    giftButton = buyPanelAddToCart.children('.pdp-smart-gift-button'); // screen width - width of quantity dropdown - margins (gutter left + between buttons + gutter right)
+
+    var width = screenWidth - 100 - 49;
+    var top = addToCartQuantity.offset().top - uaTopNavWrapper.height() - 76;
+    if ($iFrameBranchBanner.length > 0) top -= 80;
+    giftButton.addClass('GEAT-216-smart-gift-button');
+    giftButton.css('width', width);
+    giftButton.css('top', top);
+  }
+
+  function buyPanelSizeListClonedSizeCallbackOnMobile(_, size) {
+    var $item = prepareItemSize(size);
+    $item.removeAttr('data-reactid');
+    $item.click(function () {
+      currentlySelectedItemSize = $item;
+    });
+  }
+
+  function moveSizesOnMobile() {
+    buyPanelSizeListClone = buyPanelSizeList.clone();
+    var parent = buyPanelSizeList.parent();
+
+    var callback = function callback($item) {
+      var id = $item.attr('id');
+      var listItem = buyPanelSizeListClone.find("#".concat(id));
+      listItem.addClass('selected');
     };
 
-    var callback = function callback(mutationsList, observer) {
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+    setUpBuyPanelSizeList(function (_, size) {
+      return sizeListSizesCallback(_, size, callback);
+    }); // Because of how the VirtualDOM works in React, if an identical element
+    // is added to DOM, errors will be thrown. By removing the data-reactid,
+    // the VirtualDOM doesn't get upset about an identical child being present
 
-      try {
-        for (var _iterator = mutationsList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var mutation = _step.value;
-          var isHover = Array.from(mutation.target.classList).indexOf('active-hover') > -1;
+    buyPanelSizeListClone.removeAttr('data-reactid');
+    buyPanelSizeListClone.addClass('GEAT-216-buypanel-sizelist-clone');
+    buyPanelSizeListClone.children().each(buyPanelSizeListClonedSizeCallbackOnMobile); // closeSizeListOnMobile();
 
-          if (isHover) {
-            s.clearVars();
-            s.tl(true, 'o', 'navHover_GEAT-236');
-          }
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return != null) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-    };
+    parent.append(buyPanelSizeListClone); // 28 extra pixels for aesthetics
 
-    var observer = new MutationObserver(callback);
-    observer.observe(targetNode, config);
-  };
+    var extra = geatSizeTitlePriceContainer.height() + 28;
+    setSizeTitlePriceContainerHeight(extra);
+  }
+
+  function closeSizeListOnMobile() {
+    geatButtonsContainer.removeClass('GEAT-216-content-container__buttons--overlay-open');
+    geatTopNavWrapper.removeClass('GEAT-216-top-nav-container--overlay-open');
+    var darkBackground = geatStickyContainer.children('.GEAT-216-dark-background');
+    if (darkBackground.length > 0) darkBackground.remove();
+    buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--sticky-closing');
+    return setTimeout(function () {
+      buyPanelSizeList.removeClass('GEAT-216-buypanel-sizelist--sticky-open');
+      buyPanelSizeList.removeClass('GEAT-216-buypanel-sizelist--sticky-closing');
+      buyPanelSizeListClone.addClass('GEAT-216-buypanel-sizelist-clone');
+    }, 600);
+  }
+
+  function openSizeListOnMobile() {
+    geatButtonsContainer.addClass('GEAT-216-content-container__buttons--overlay-open');
+    geatTopNavWrapper.addClass('GEAT-216-top-nav-container--overlay-open');
+    geatStickyContainer.prepend('<div class="GEAT-216-dark-background" />'); // Setting height via JS because without knowing the scroll height, we
+    // will get the dark background ending too early (if you're closer to
+    // the bottom of the page) or ending too late, thus increasing the scrollable
+    // area of the whole screen.
+
+    geatStickyContainer.children('.GEAT-216-dark-background') // Extra 200 for a lil wiggle room
+    .css('height', document.body.scrollHeight + 200).click(handleCloseClick);
+    buyPanelSizeListClone.addClass('GEAT-216-buypanel-sizelist-clone--sticky-opening');
+    return setTimeout(function () {
+      buyPanelSizeListClone.removeClass('GEAT-216-buypanel-sizelist-clone');
+      buyPanelSizeListClone.removeClass('GEAT-216-buypanel-sizelist-clone--sticky-opening');
+      buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--sticky-open');
+    }, 600);
+  }
+
+  function setUpTitlesAndPricesOnMobile(productPrice, productTitle) {
+    geatSizeTitlePriceContainer = geatContentContainer.children('.GEAT-216-content-container__size-title-price');
+    geatSizeTitlePriceContainer.children('.GEAT-216-title-price-heading-container').prepend(productTitle).append(productPrice);
+  }
+
+  function addSpecificBottomStyleOnMobile() {
+    // container height + padding - button container height + extra for a lil cleaner transition
+    var bottom = (geatSizeTitlePriceContainer.height() + 24 - 81 + 80) * -1; // Adding styles this way because without knowing the container height, the transition
+    // may be too far down or not far enough and will thus create an awkward looking
+    // transition.
+
+    var bottomStyle = "\n      <style type='text/css'>\n        .GEAT-216-content-container__size-title-price--closed {\n          bottom: ".concat(bottom, "px;\n        }\n\n        .GEAT-216-buypanel-sizelist--sticky-closing,\n        .GEAT-216-buypanel-sizelist-clone {\n          bottom: ").concat(bottom, "px;\n        }\n      </style>\n    ");
+    jQuery(bottomStyle).appendTo('body');
+  }
+
+  function addStickyContainerOnMobile() {
+    buyPanelAddToCart = $contentWrapper.find('.buypanel_addtocart');
+    buyPanelAddToCart.prepend(stickyContainerHtmlOnMobile);
+    geatStickyContainer = buyPanelAddToCart.children('.GEAT-216-sticky-container');
+    updateElementsInBuyPanelOnMobile();
+  }
+
+  function handleGoToAppIFrameAppearingOnMobile() {
+    if ($iFrameBranchBanner.length > 0) {
+      $iFrameBranchBanner.contents().find('.branch-banner-close').click(function () {
+        var currentTop = giftButton.css('top');
+        giftButton.css('top', currentTop + 80);
+      });
+    }
+  } // //////////////
+  // Tablet only
+  // //////////////
+
+
+  function handleGoToAppIFrameAppearingOnTablet() {
+    if ($iFrameBranchBanner.length > 0) {
+      geatStickyContainer.addClass('GEAT-216-sticky-container--iframe-open');
+      pdpContainer.addClass('GEAT-216-pdp-container--iframe-open');
+      buyPanelSizeList.addClass('GEAT-216-buypanel-sizelist--iframe-open');
+      $iFrameBranchBanner.contents().find('.branch-banner-close').click(function () {
+        geatStickyContainer.removeClass('GEAT-216-sticky-container--iframe-open');
+        pdpContainer.removeClass('GEAT-216-pdp-container--iframe-open');
+        buyPanelSizeList.removeClass('GEAT-216-buypanel-sizelist--iframe-open');
+      });
+    }
+  } // //////////////
+  // Base Functionality
+  // //////////////
+  // HTMLs
+
+
+  var closeButtonHtml = "\n    <div class=\"GEAT-216-close-link-container\">\n      <div class=\"GEAT-216-close-link\">\n        <span class=\"nav-list-mobile-icon GEAT-216-close-link__x\" />\n        <h4 class=\"GEAT-216-close-link__title\"> Close</h4>\n      </div>\n    </div>\n  ";
+  var sizeErrorHtml = "\n    <div class=\"GEAT-216-size-error\">\n      Please select size\n    </div>\n  ";
+  var stickyContainerHtmlOnMobile = "\n    <div class=\"pdp-redesign GEAT-216-sticky-container\">\n      <div class=\"GEAT-216-content-container\">\n        <div class=\"GEAT-216-content-container__size-title-price GEAT-216-content-container__size-title-price--closed\">\n          <div class=\"GEAT-216-title-price-heading-container\" />\n          ".concat(sizeErrorHtml, "\n          ").concat(closeButtonHtml, "\n        </div>\n\n        <div class=\"GEAT-216-content-container__buttons\" />\n      </div>\n    </div>\n  ");
+  var stickyContainerHtmlOnDesktop = "\n    <div class=\"pdp-redesign GEAT-216-sticky-container GEAT-216-sticky-container--closed\">\n      <div class=\"GEAT-216-content-container\">\n        <div class=\"GEAT-216-title-price-heading-container\" />\n        <div class=\"GEAT-216-content-container__buttons\" />\n      </div>\n\n      <div class=\"GEAT-216-content-container__size-title-price GEAT-216-content-container__size-title-price--closed\">\n        ".concat(sizeErrorHtml, "\n        ").concat(closeButtonHtml, "\n      </div>\n    </div>\n  "); // Events
+
+  function setUpTitlesAndPrices() {
+    var buyPanelElements = pdpContainer.find('.buypanel');
+    var productPrice = buyPanelElements.find('.buypanel_productprice');
+    var productTitle = buyPanelElements.find('.buypanel_producttitle');
+    productPrice.addClass('GEAT-216-product-price');
+    productTitle.addClass('GEAT-216-product-title');
+    productTitle.children('.buypanel_cattitle').remove();
+    if (isOnMobile) return setUpTitlesAndPricesOnMobile(productPrice, productTitle);
+    return setUpTitlesAndPricesOnDesktop(productPrice, productTitle);
+  }
+
+  function addStickyContainer() {
+    if (!isOnDesktop) $iFrameBranchBanner = jQuery('#branch-banner-iframe');
+    geatTopNavWrapper = $contentWrapper.find('.top-nav-container');
+    geatTopNavWrapper.addClass('GEAT-216-top-nav-container');
+
+    if (isOnMobile) {
+      addStickyContainerOnMobile();
+    } else {
+      addStickyContainerOnDesktop();
+    }
+
+    geatContentContainer = geatStickyContainer.children('.GEAT-216-content-container');
+    geatButtonsContainer = geatContentContainer.children('.GEAT-216-content-container__buttons');
+    setUpTitlesAndPrices();
+
+    if (isOnMobile) {
+      moveSizesOnMobile();
+      addSpecificBottomStyleOnMobile();
+      handleGoToAppIFrameAppearingOnMobile();
+    } else {
+      moveSizesOnDesktop();
+    }
+
+    if (isOnTablet) handleGoToAppIFrameAppearingOnTablet();
+    handleGiftCardPage();
+  }
 
   var offer = function offer() {
-    jQuery(styles).appendTo('head');
-    var categories = $navList.children('.ua-top-nav-category').not('.hide-desktop');
-    var isOnTablet = window.screen.width >= 768 && window.screen.width < 991;
-    var isOnDesktop = window.screen.width >= 991;
-    if (!isOnTablet && !isOnDesktop) return;
-    categories.each(function (index, category) {
-      return handleCategory(category, isOnTablet);
+    jQuery(styles).appendTo('body'); // This class is just to add specificity for styling and to
+    // ensure classes elsewhere on UA are not overidden
+
+    pdpContainer.addClass('GEAT-216-pdp-container');
+
+    window.require('process').once('addToCart.complete', function () {
+      console.log('checkout complete... add tracking event here');
+      handleCloseClick();
     });
+
+    screenWidth = window.screen.width;
+    isOnDesktop = screenWidth >= 991;
+    isOnMobile = screenWidth <= 767;
+    isOnTablet = screenWidth >= 768 && screenWidth <= 990;
+
+    if (!isOnMobile) {
+      // button position - message nav size - main nav size + button size
+      buttonPosition = originalCheckoutButton.offset().top - 30 - 75 + 50;
+      isStickyContainerOpen = false;
+      jQuery(window).on('scroll', handleScrollOnDesktop);
+    }
+
+    handleCTAs();
+    addStickyContainer();
   };
 
-  runPoll(pollCondition, offer, 50);
-  attachHoverMutationObserver();
+  runPoll(pollCondition, offer, 100);
 })();
 
 /***/ })

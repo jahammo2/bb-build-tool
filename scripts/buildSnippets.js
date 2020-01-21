@@ -1,22 +1,22 @@
 const indentString = require('indent-string');
 const fs = require('fs');
 const path = require('path');
-const stripIndent = require('strip-indent');
 
 const ticketName = process.env.TICKET_NAME;
 
 const snippetName = `${ticketName}-${process.env.SNIPPET_NAME}`;
 
-const baseDevPath = path.join(__dirname, '../../', ticketName);
-const baseProjectsPath = path.join(__dirname, '../../../projects', snippetName);
+const baseDevPath = path.join(__dirname, '../', ticketName);
+const baseDistPath = path.join(__dirname, '../dist');
+const baseProjectsPath = path.join(__dirname, '../../projects', snippetName);
 
+const autoprefixedCssFilePath = path.join(baseDistPath, 'autoprefixed.css');
 const compiledSnippetFilePath = path.join(baseProjectsPath, 'snippet_compiled.html');
-const distMainJsFilePath = path.join(__dirname, '../dist/main.js');
+const distMainJsFilePath = path.join(baseDistPath, 'main.js');
 const indexJsFilePath = path.join(baseDevPath, 'index.js');
 const snippetFilePath = path.join(baseProjectsPath, 'snippet.html');
-const stylesJsFilePath = path.join(baseDevPath, 'styles.js');
 
-let formattedStylesJs;
+let autoPrefixedCssStyles;
 
 function getContent(filePath) {
   return new Promise((resolve, reject) => fs.readFile(filePath, { encoding: 'utf-8' }, (err, data) => {
@@ -25,10 +25,10 @@ function getContent(filePath) {
   }));
 }
 
-async function setFormattedStylesJs() {
-  const stylesJs = await getContent(stylesJsFilePath);
-  const split = stylesJs.split('const styles = `\n')[1].split('\n`;')[0];
-  formattedStylesJs = stripIndent(split, 2);
+async function setAutoPrefixedCssStyles() {
+  const autoprefixedCss = await getContent(autoprefixedCssFilePath);
+  const split = autoprefixedCss.split('\n/*# sourceMappingURL')[0];
+  autoPrefixedCssStyles = indentString(split, 2);
 }
 
 function writeFile(indexJs, filePath) {
@@ -37,7 +37,9 @@ function writeFile(indexJs, filePath) {
   let snippetFileContent = '<script>\n';
   snippetFileContent += formattedIndexJs;
   snippetFileContent += '\n</script>\n';
-  snippetFileContent += formattedStylesJs;
+  snippetFileContent += "<style type='text/css'>\n";
+  snippetFileContent += autoPrefixedCssStyles;
+  snippetFileContent += '\n</style>';
 
   return fs.writeFile(filePath, snippetFileContent, 'utf8', (err) => {
     if (err) throw err;
@@ -59,7 +61,7 @@ async function buildCompiledSnippet() {
 }
 
 async function buildAll() {
-  await setFormattedStylesJs();
+  await setAutoPrefixedCssStyles();
   await buildSnippet();
   return buildCompiledSnippet();
 }
